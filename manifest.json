@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Stake Blackjack Helper",
+  "version": "1.0",
+  "description": "Reads blackjack cards on Stake and suggests the correct move using basic strategy.",
+  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "content_scripts": [
+    {
+      "matches": ["*://stake.com/*"],
+      "js": ["src/content.js"],
+      "type": "module"
+    }
+  ],
+  "action": {
+    "default_title": "Open Blackjack Helper"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}
+
