@@ -291,6 +291,10 @@
             <span class="bj-value" id="bj-dealer-card">-</span>
           </div>
         </div>
+        <div class="bj-insurance" id="bj-insurance" style="display: none;">
+          <div class="bj-insurance-label">Insurance Offered</div>
+          <div class="bj-insurance-recommendation" id="bj-insurance-rec">-</div>
+        </div>
         <div class="bj-recommendation">
           <div class="bj-move-label">Recommended Move</div>
           <div class="bj-move" id="bj-move">-</div>
@@ -431,9 +435,40 @@
         font-weight: 700;
         font-size: 14px;
       }
+      .bj-insurance {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.1) 100%);
+        border: 2px solid rgba(239, 68, 68, 0.3);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .bj-insurance-label {
+        font-size: 11px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .bj-insurance-recommendation {
+        font-size: 24px;
+        font-weight: 800;
+        color: #ef4444;
+        text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        letter-spacing: 1px;
+      }
     `;
     document.head.appendChild(style);
     document.body.appendChild(overlayBox);
+  }
+  
+  function shouldShowInsurance(playerHand, dealerCard) {
+    return dealerCard === "A" && playerHand && playerHand.length === 2;
+  }
+  
+  function getInsuranceRecommendation() {
+    return "DECLINE";
   }
   
   function updateOverlay(move, playerHand, dealerCard, stats) {
@@ -450,6 +485,16 @@
     document.getElementById("bj-player-hand").textContent = playerHand ? formatHand(playerHand) : "-";
     document.getElementById("bj-dealer-card").textContent = dealerCard ? (dealerCard === "A" ? "A" : dealerCard) : "-";
     document.getElementById("bj-move").textContent = move || "-";
+    
+    const insuranceEl = document.getElementById("bj-insurance");
+    const insuranceRecEl = document.getElementById("bj-insurance-rec");
+    
+    if (shouldShowInsurance(playerHand, dealerCard)) {
+      insuranceEl.style.display = "block";
+      insuranceRecEl.textContent = getInsuranceRecommendation();
+    } else {
+      insuranceEl.style.display = "none";
+    }
     
     if (stats) {
       document.getElementById("bj-prob-stand").textContent = formatPercent(stats.winProbStand);
