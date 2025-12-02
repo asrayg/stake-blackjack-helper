@@ -1,8 +1,6 @@
 (function() {
   'use strict';
   
-  let stats = { wins: 0, losses: 0, games: 0 };
-  
   function readCards() {
     const player = [];
     const dealer = [];
@@ -314,27 +312,6 @@
             </div>
           </div>
         </div>
-        <div class="bj-stats">
-          <div class="bj-stats-title">Session Stats</div>
-          <div class="bj-stats-grid">
-            <div class="bj-stat-item">
-              <span class="bj-stat-label">Wins:</span>
-              <span class="bj-stat-value" id="bj-stat-wins">0</span>
-            </div>
-            <div class="bj-stat-item">
-              <span class="bj-stat-label">Losses:</span>
-              <span class="bj-stat-value" id="bj-stat-losses">0</span>
-            </div>
-            <div class="bj-stat-item">
-              <span class="bj-stat-label">Games:</span>
-              <span class="bj-stat-value" id="bj-stat-games">0</span>
-            </div>
-            <div class="bj-stat-item">
-              <span class="bj-stat-label">Win Rate:</span>
-              <span class="bj-stat-value" id="bj-stat-rate">0%</span>
-            </div>
-          </div>
-        </div>
       </div>
     `;
     
@@ -454,55 +431,9 @@
         font-weight: 700;
         font-size: 14px;
       }
-      .bj-stats {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 16px;
-      }
-      .bj-stats-title {
-        font-size: 12px;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 12px;
-        font-weight: 600;
-        text-align: center;
-      }
-      .bj-stats-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      .bj-stat-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 12px;
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 8px;
-        font-size: 13px;
-      }
-      .bj-stat-label {
-        color: #cbd5e1;
-        font-weight: 500;
-      }
-      .bj-stat-value {
-        color: #4ade80;
-        font-weight: 700;
-        font-size: 14px;
-      }
     `;
     document.head.appendChild(style);
     document.body.appendChild(overlayBox);
-  }
-  
-  function updateStats() {
-    if (!overlayBox) return;
-    document.getElementById("bj-stat-wins").textContent = stats.wins;
-    document.getElementById("bj-stat-losses").textContent = stats.losses;
-    document.getElementById("bj-stat-games").textContent = stats.games;
-    const rate = stats.games > 0 ? ((stats.wins / stats.games) * 100).toFixed(1) : 0;
-    document.getElementById("bj-stat-rate").textContent = rate + "%";
   }
   
   function updateOverlay(move, playerHand, dealerCard, stats) {
@@ -534,68 +465,10 @@
     if (statusEl) {
       statusEl.textContent = move ? "Ready" : "Waiting for cards...";
     }
-    
-    updateStats();
-  }
-  
-  function readAllCards() {
-    const player = [];
-    const dealer = [];
-    
-    const dealerContainer = document.querySelector('[data-testid="dealer"]');
-    const playerContainer = document.querySelector('[data-testid="player"]');
-    
-    const parseCardValue = (spanElement) => {
-      if (!spanElement) return null;
-      const text = spanElement.textContent.trim();
-      if (text === 'A' || text === 'a') return "A";
-      if (text === 'K' || text === 'k') return 10;
-      if (text === 'Q' || text === 'q') return 10;
-      if (text === 'J' || text === 'j') return 10;
-      const num = parseInt(text);
-      if (!isNaN(num) && num >= 2 && num <= 10) return num;
-      return null;
-    };
-    
-    if (dealerContainer) {
-      const dealerCards = dealerContainer.querySelectorAll('[data-testid^="card-"]');
-      for (const card of dealerCards) {
-        const faceContent = card.querySelector('.face-content');
-        if (faceContent) {
-          const span = faceContent.querySelector('span');
-          if (span && span.textContent.trim()) {
-            const value = parseCardValue(span);
-            if (value !== null) {
-              dealer.push(value);
-            }
-          }
-        }
-      }
-    }
-    
-    if (playerContainer) {
-      const playerCards = playerContainer.querySelectorAll('[data-testid^="card-"]');
-      for (const card of playerCards) {
-        const faceContent = card.querySelector('.face-content');
-        if (faceContent) {
-          const span = faceContent.querySelector('span');
-          if (span && span.textContent.trim()) {
-            const value = parseCardValue(span);
-            if (value !== null) {
-              player.push(value);
-            }
-          }
-        }
-      }
-    }
-    
-    return { player, dealer };
   }
   
   let lastCardState = null;
   let stableCount = 0;
-  let lastGameState = null;
-  let gameInProgress = false;
   const STABLE_THRESHOLD = 3;
   const CHECK_INTERVAL = 500;
   
@@ -610,51 +483,12 @@
     try {
       const currentState = getCardState();
       const { player, dealer } = readCards();
-      const allCards = readAllCards();
       
       const hasCards = player.length > 0 || dealer;
-      const hasAllCards = allCards.player.length > 0 && allCards.dealer.length > 0;
-      
-      if (hasAllCards && !gameInProgress) {
-        gameInProgress = true;
-        lastGameState = {
-          player: [...allCards.player],
-          dealer: [...allCards.dealer]
-        };
-      }
       
       if (currentState !== lastCardState) {
         lastCardState = currentState;
         stableCount = 0;
-        
-        if (gameInProgress && !hasCards && lastGameState) {
-          const finalCards = readAllCards();
-          if (finalCards.player.length > 0 && finalCards.dealer.length > 0) {
-            const playerTotal = handTotal(finalCards.player);
-            const dealerTotal = handTotal(finalCards.dealer);
-            
-            let playerWon = false;
-            if (playerTotal > 21) {
-              playerWon = false;
-            } else if (dealerTotal > 21) {
-              playerWon = true;
-            } else if (playerTotal > dealerTotal) {
-              playerWon = true;
-            } else if (playerTotal < dealerTotal) {
-              playerWon = false;
-            }
-            
-            stats.games++;
-            if (playerWon) {
-              stats.wins++;
-            } else {
-              stats.losses++;
-            }
-            updateStats();
-          }
-          gameInProgress = false;
-          lastGameState = null;
-        }
         
         if (hasCards) {
           updateOverlay("Reading cards...", null, null, null);
@@ -665,7 +499,6 @@
       }
       
       if (!hasCards) {
-        gameInProgress = false;
         updateOverlay("Waiting...", null, null, null);
         return;
       }
