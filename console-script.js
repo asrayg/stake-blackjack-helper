@@ -1,21 +1,14 @@
-// Stake Blackjack Helper - Console Script
-// Paste this entire script into the browser console on the Stake blackjack page
-
 (function() {
   'use strict';
   
-  console.log("[BJ Helper] Console script loaded!");
+  let stats = { wins: 0, losses: 0, games: 0 };
   
-  // Card detection
   function readCards() {
     const player = [];
     const dealer = [];
     
     const dealerContainer = document.querySelector('[data-testid="dealer"]');
     const playerContainer = document.querySelector('[data-testid="player"]');
-    
-    console.log("[BJ Helper] Dealer container:", !!dealerContainer);
-    console.log("[BJ Helper] Player container:", !!playerContainer);
     
     const parseCardValue = (spanElement) => {
       if (!spanElement) return null;
@@ -31,11 +24,8 @@
       return null;
     };
     
-    // Get dealer cards - only first visible card (up card)
     if (dealerContainer) {
       const dealerCards = dealerContainer.querySelectorAll('[data-testid^="card-"]');
-      console.log("[BJ Helper] Found", dealerCards.length, "dealer cards");
-      
       for (const card of dealerCards) {
         const faceContent = card.querySelector('.face-content');
         if (faceContent) {
@@ -44,7 +34,6 @@
             const value = parseCardValue(span);
             if (value !== null) {
               dealer.push(value);
-              console.log("[BJ Helper] Found dealer card:", value);
               break;
             }
           }
@@ -52,11 +41,8 @@
       }
     }
     
-    // Get player cards
     if (playerContainer) {
       const playerCards = playerContainer.querySelectorAll('[data-testid^="card-"]');
-      console.log("[BJ Helper] Found", playerCards.length, "player cards");
-      
       for (const card of playerCards) {
         const faceContent = card.querySelector('.face-content');
         if (faceContent) {
@@ -65,53 +51,50 @@
             const value = parseCardValue(span);
             if (value !== null) {
               player.push(value);
-              console.log("[BJ Helper] Found player card:", value);
             }
           }
         }
       }
     }
     
-    console.log("[BJ Helper] Final results:", { player, dealer: dealer.length > 0 ? dealer[0] : null });
     return { player, dealer: dealer.length > 0 ? dealer[0] : null };
   }
   
-  // Strategy tables - converted from Python dictionary format
   const hardStrategy = {
     8:  {2:"H",3:"H",4:"H",5:"H",6:"H",7:"H",8:"H",9:"H",10:"H","A":"H"},
-    9:  {2:"H",3:"D/H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},
-    10: {2:"D/H",3:"D/H",4:"D/H",5:"D/H",6:"D/H",7:"D/H",8:"D/H",9:"D/H",10:"H","A":"H"},
-    11: {2:"D/H",3:"D/H",4:"D/H",5:"D/H",6:"D/H",7:"D/H",8:"D/H",9:"D/H",10:"D/H","A":"D/H"},
+    9:  {2:"H",3:"DD",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    10: {2:"DD",3:"DD",4:"DD",5:"DD",6:"DD",7:"DD",8:"DD",9:"DD",10:"H","A":"H"},
+    11: {2:"DD",3:"DD",4:"DD",5:"DD",6:"DD",7:"DD",8:"DD",9:"DD",10:"DD","A":"DD"},
     12: {2:"H",3:"H",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H",10:"H","A":"H"},
     13: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H",10:"H","A":"H"},
     14: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H",10:"H","A":"H"},
-    15: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H",10:"R/H","A":"R/H"},
-    16: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"R/H",10:"R/H","A":"H"},
+    15: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H",10:"H/R","A":"H"},
+    16: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"H",8:"H",9:"H/R",10:"H/R","A":"H"},
     17: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"}
   };
   
   const softStrategy = {
-    13: {2:"H",3:"H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},  // A,2
-    14: {2:"H",3:"H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},  // A,3
-    15: {2:"H",3:"H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},  // A,4
-    16: {2:"H",3:"H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},  // A,5
-    17: {2:"H",3:"D/H",4:"D/H",5:"D/H",6:"D/H",7:"H",8:"H",9:"H",10:"H","A":"H"},  // A,6
-    18: {2:"S",3:"D/S",4:"D/S",5:"D/S",6:"D/S",7:"S",8:"S",9:"H",10:"H","A":"H"},  // A,7
-    19: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"},  // A,8
-    20: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"}   // A,9
+    13: {2:"H",3:"H",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    14: {2:"H",3:"H",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    15: {2:"H",3:"H",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    16: {2:"H",3:"H",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    17: {2:"H",3:"DD",4:"DD",5:"DD",6:"DD",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    18: {2:"S",3:"DD",4:"DD",5:"DD",6:"DD",7:"S",8:"S",9:"H",10:"H","A":"H"},
+    19: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"},
+    20: {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"}
   };
   
   const splitStrategy = {
     "A": {2:"P",3:"P",4:"P",5:"P",6:"P",7:"P",8:"P",9:"P",10:"P","A":"P"},
-    10:  {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"},  // Never split 10s
+    10:  {2:"S",3:"S",4:"S",5:"S",6:"S",7:"S",8:"S",9:"S",10:"S","A":"S"},
     9:   {2:"P",3:"P",4:"P",5:"P",6:"P",7:"S",8:"P",9:"P",10:"S","A":"S"},
     8:   {2:"P",3:"P",4:"P",5:"P",6:"P",7:"P",8:"P",9:"P",10:"P","A":"P"},
     7:   {2:"P",3:"P",4:"P",5:"P",6:"P",7:"P",8:"H",9:"H",10:"H","A":"H"},
-    6:   {2:"P/H",3:"P",4:"P",5:"P",6:"P",7:"H",8:"H",9:"H",10:"H","A":"H"},
-    5:   {2:"D/H",3:"D/H",4:"D/H",5:"D/H",6:"D/H",7:"D/H",8:"D/H",9:"D/H",10:"H","A":"H"},
-    4:   {2:"H",3:"H",4:"H",5:"P/H",6:"P/H",7:"H",8:"H",9:"H",10:"H","A":"H"},
-    3:   {2:"P/H",3:"P/H",4:"P",5:"P",6:"P",7:"P",8:"H",9:"H",10:"H","A":"H"},
-    2:   {2:"P/H",3:"P/H",4:"P",5:"P",6:"P",7:"P",8:"H",9:"H",10:"H","A":"H"}
+    6:   {2:"H/P",3:"P",4:"P",5:"P",6:"P",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    5:   {2:"DD",3:"DD",4:"DD",5:"DD",6:"DD",7:"DD",8:"DD",9:"DD",10:"H","A":"H"},
+    4:   {2:"H",3:"H",4:"H/P",5:"H/P",6:"H/P",7:"H",8:"H",9:"H",10:"H","A":"H"},
+    3:   {2:"H/P",3:"H/P",4:"P",5:"P",6:"P",7:"P",8:"H",9:"H",10:"H","A":"H"},
+    2:   {2:"H/P",3:"H/P",4:"P",5:"P",6:"P",7:"P",8:"H",9:"H",10:"H","A":"H"}
   };
 
   
@@ -138,13 +121,10 @@
   }
   
   function expandMove(code) {
-    // Handle compound moves: D/H, D/S, P/H, R/H
-    if (code === "D/H") return "DOUBLE"; // Double if allowed, otherwise Hit
-    if (code === "D/S") return "DOUBLE"; // Double if allowed, otherwise Stand
-    if (code === "P/H") return "SPLIT";  // Split if double after split allowed, otherwise Hit
-    if (code === "R/H") return "SURRENDER"; // Surrender if allowed, otherwise Hit
+    if (code === "DD") return "DOUBLE";
+    if (code === "H/R") return "SURRENDER";
+    if (code === "H/P") return "SPLIT";
     
-    // Simple moves
     return {
       "H": "HIT",
       "S": "STAND",
@@ -158,10 +138,8 @@
     const total = handTotal(player);
     const soft = isSoft(player);
     
-    // If player has busted, always stand (game over for player)
     if (total > 21) return "STAND";
     
-    // Check for pairs (split) - must check before soft/hard totals
     if (player.length === 2 && player[0] === player[1]) {
       const rank = player[0];
       if (splitStrategy[rank] && splitStrategy[rank][dealer]) {
@@ -169,43 +147,31 @@
       }
     }
     
-    // Check soft totals (hands with Ace counted as 11)
     if (soft) {
       const strat = softStrategy[total];
       if (strat && strat[dealer]) return expandMove(strat[dealer]);
     }
     
-    // Check hard totals (no Ace counted as 11, or Ace counted as 1)
     const strat = hardStrategy[total];
     if (strat && strat[dealer]) return expandMove(strat[dealer]);
     
-    // Default fallback for totals not in tables (shouldn't happen)
     if (total >= 18) return "STAND";
     return "HIT";
   }
   
-  // Probability calculations
   function calculateProbabilities(player, dealer) {
     const playerTotal = handTotal(player);
     const dealerValue = dealer === "A" ? 11 : dealer;
     
-    // Standard deck card probabilities (simplified - assumes infinite deck)
     const cardProbs = {
       2: 1/13, 3: 1/13, 4: 1/13, 5: 1/13, 6: 1/13, 7: 1/13, 8: 1/13, 9: 1/13,
-      10: 4/13, // 10, J, Q, K
+      10: 4/13,
       "A": 1/13
     };
 
-    // Calculate dealer's probability of busting or getting specific totals
     const dealerOutcomes = calculateDealerOutcomes(dealerValue, cardProbs);
-    
-    // Probability of winning if we stand
     const winProbStand = calculateWinProbabilityStand(playerTotal, dealerOutcomes);
-    
-    // Probability of winning if we hit (one card)
     const { winProb: winProbHit, bustProb: bustProbHit } = calculateHitOutcomes(player, cardProbs, dealerOutcomes);
-    
-    // Probability of winning if we double (same as hit but only one card)
     const { winProb: winProbDouble } = calculateHitOutcomes(player, cardProbs, dealerOutcomes);
 
     return {
@@ -217,7 +183,6 @@
   }
 
   function calculateDealerOutcomes(dealerUpCard, cardProbs) {
-    // Simplified dealer probability calculation using Monte Carlo simulation
     const outcomes = {};
     const simulations = 10000;
     
@@ -225,9 +190,7 @@
       let total = dealerUpCard;
       let hasAce = dealerUpCard === 11;
       
-      // Dealer hits until 17 or higher
       while (total < 17) {
-        // Draw a random card based on probabilities
         const rand = Math.random();
         let card = null;
         let cumProb = 0;
@@ -240,9 +203,8 @@
           }
         }
         
-        if (!card) card = "10"; // fallback
+        if (!card) card = "10";
         
-        // Add card to total
         if (card === "A") {
           total += 11;
           hasAce = true;
@@ -250,17 +212,14 @@
           total += parseInt(card);
         }
         
-        // Adjust for aces if needed
         if (total > 21 && hasAce) {
           total -= 10;
           hasAce = false;
         }
         
-        // Prevent infinite loop
         if (total < 7) break;
       }
       
-      // Record outcome
       if (total > 21) {
         outcomes.bust = (outcomes.bust || 0) + 1;
       } else {
@@ -268,7 +227,6 @@
       }
     }
     
-    // Normalize to probabilities
     for (const key in outcomes) {
       outcomes[key] /= simulations;
     }
@@ -278,11 +236,8 @@
 
   function calculateWinProbabilityStand(playerTotal, dealerOutcomes) {
     let winProb = 0;
-    
-    // Win if dealer busts
     winProb += dealerOutcomes.bust || 0;
     
-    // Win if dealer gets lower total
     for (const [total, prob] of Object.entries(dealerOutcomes)) {
       if (total !== "bust" && parseInt(total) < playerTotal) {
         winProb += prob;
@@ -297,16 +252,13 @@
     let bustProb = 0;
     const playerTotal = handTotal(player);
     
-    // Try each possible card we could draw
     for (const [card, prob] of Object.entries(cardProbs)) {
       const newHand = [...player, card === "A" ? "A" : parseInt(card)];
       const newTotal = handTotal(newHand);
       
       if (newTotal > 21) {
-        // We bust
         bustProb += prob;
       } else {
-        // Calculate win probability with this new total
         const winProbWithCard = calculateWinProbabilityStand(newTotal, dealerOutcomes);
         winProb += prob * winProbWithCard;
       }
@@ -318,7 +270,6 @@
     };
   }
 
-  // Create overlay with modern UI
   let overlayBox = null;
   
   function createOverlay() {
@@ -363,10 +314,30 @@
             </div>
           </div>
         </div>
+        <div class="bj-stats">
+          <div class="bj-stats-title">Session Stats</div>
+          <div class="bj-stats-grid">
+            <div class="bj-stat-item">
+              <span class="bj-stat-label">Wins:</span>
+              <span class="bj-stat-value" id="bj-stat-wins">0</span>
+            </div>
+            <div class="bj-stat-item">
+              <span class="bj-stat-label">Losses:</span>
+              <span class="bj-stat-value" id="bj-stat-losses">0</span>
+            </div>
+            <div class="bj-stat-item">
+              <span class="bj-stat-label">Games:</span>
+              <span class="bj-stat-value" id="bj-stat-games">0</span>
+            </div>
+            <div class="bj-stat-item">
+              <span class="bj-stat-label">Win Rate:</span>
+              <span class="bj-stat-value" id="bj-stat-rate">0%</span>
+            </div>
+          </div>
+        </div>
       </div>
     `;
     
-    // Add styles
     const style = document.createElement("style");
     style.textContent = `
       #bj-helper-overlay {
@@ -449,6 +420,7 @@
         background: rgba(255, 255, 255, 0.05);
         border-radius: 12px;
         padding: 16px;
+        margin-bottom: 20px;
       }
       .bj-prob-title {
         font-size: 12px;
@@ -482,10 +454,55 @@
         font-weight: 700;
         font-size: 14px;
       }
+      .bj-stats {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .bj-stats-title {
+        font-size: 12px;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 12px;
+        font-weight: 600;
+        text-align: center;
+      }
+      .bj-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .bj-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      .bj-stat-label {
+        color: #cbd5e1;
+        font-weight: 500;
+      }
+      .bj-stat-value {
+        color: #4ade80;
+        font-weight: 700;
+        font-size: 14px;
+      }
     `;
     document.head.appendChild(style);
     document.body.appendChild(overlayBox);
-    console.log("[BJ Helper] Overlay created");
+  }
+  
+  function updateStats() {
+    if (!overlayBox) return;
+    document.getElementById("bj-stat-wins").textContent = stats.wins;
+    document.getElementById("bj-stat-losses").textContent = stats.losses;
+    document.getElementById("bj-stat-games").textContent = stats.games;
+    const rate = stats.games > 0 ? ((stats.wins / stats.games) * 100).toFixed(1) : 0;
+    document.getElementById("bj-stat-rate").textContent = rate + "%";
   }
   
   function updateOverlay(move, playerHand, dealerCard, stats) {
@@ -499,14 +516,10 @@
       return (prob * 100).toFixed(1) + "%";
     };
     
-    // Update hand info
     document.getElementById("bj-player-hand").textContent = playerHand ? formatHand(playerHand) : "-";
     document.getElementById("bj-dealer-card").textContent = dealerCard ? (dealerCard === "A" ? "A" : dealerCard) : "-";
-    
-    // Update move
     document.getElementById("bj-move").textContent = move || "-";
     
-    // Update probabilities
     if (stats) {
       document.getElementById("bj-prob-stand").textContent = formatPercent(stats.winProbStand);
       document.getElementById("bj-prob-hit").textContent = formatPercent(stats.winProbHit);
@@ -517,76 +530,166 @@
       document.getElementById("bj-prob-double").textContent = "-";
     }
     
-    // Update status
     const statusEl = overlayBox.querySelector(".bj-status");
     if (statusEl) {
       statusEl.textContent = move ? "Ready" : "Waiting for cards...";
     }
+    
+    updateStats();
   }
   
-  // Card stability check - wait for cards to be fully loaded
+  function readAllCards() {
+    const player = [];
+    const dealer = [];
+    
+    const dealerContainer = document.querySelector('[data-testid="dealer"]');
+    const playerContainer = document.querySelector('[data-testid="player"]');
+    
+    const parseCardValue = (spanElement) => {
+      if (!spanElement) return null;
+      const text = spanElement.textContent.trim();
+      if (text === 'A' || text === 'a') return "A";
+      if (text === 'K' || text === 'k') return 10;
+      if (text === 'Q' || text === 'q') return 10;
+      if (text === 'J' || text === 'j') return 10;
+      const num = parseInt(text);
+      if (!isNaN(num) && num >= 2 && num <= 10) return num;
+      return null;
+    };
+    
+    if (dealerContainer) {
+      const dealerCards = dealerContainer.querySelectorAll('[data-testid^="card-"]');
+      for (const card of dealerCards) {
+        const faceContent = card.querySelector('.face-content');
+        if (faceContent) {
+          const span = faceContent.querySelector('span');
+          if (span && span.textContent.trim()) {
+            const value = parseCardValue(span);
+            if (value !== null) {
+              dealer.push(value);
+            }
+          }
+        }
+      }
+    }
+    
+    if (playerContainer) {
+      const playerCards = playerContainer.querySelectorAll('[data-testid^="card-"]');
+      for (const card of playerCards) {
+        const faceContent = card.querySelector('.face-content');
+        if (faceContent) {
+          const span = faceContent.querySelector('span');
+          if (span && span.textContent.trim()) {
+            const value = parseCardValue(span);
+            if (value !== null) {
+              player.push(value);
+            }
+          }
+        }
+      }
+    }
+    
+    return { player, dealer };
+  }
+  
   let lastCardState = null;
   let stableCount = 0;
-  const STABLE_THRESHOLD = 3; // Cards must be stable for 3 checks (1.5 seconds)
-  const CHECK_INTERVAL = 500; // Check every 500ms
+  let lastGameState = null;
+  let gameInProgress = false;
+  const STABLE_THRESHOLD = 3;
+  const CHECK_INTERVAL = 500;
   
   function getCardState() {
     const { player, dealer } = readCards();
     return JSON.stringify({ player, dealer });
   }
   
-  // Main loop
   createOverlay();
   
   function loop() {
     try {
       const currentState = getCardState();
       const { player, dealer } = readCards();
+      const allCards = readAllCards();
       
-      // Check if cards have changed
+      const hasCards = player.length > 0 || dealer;
+      const hasAllCards = allCards.player.length > 0 && allCards.dealer.length > 0;
+      
+      if (hasAllCards && !gameInProgress) {
+        gameInProgress = true;
+        lastGameState = {
+          player: [...allCards.player],
+          dealer: [...allCards.dealer]
+        };
+      }
+      
       if (currentState !== lastCardState) {
         lastCardState = currentState;
         stableCount = 0;
-        updateOverlay("Reading cards...", null, null, null);
-        console.log("[BJ Helper] Cards changed, re-reading...");
+        
+        if (gameInProgress && !hasCards && lastGameState) {
+          const finalCards = readAllCards();
+          if (finalCards.player.length > 0 && finalCards.dealer.length > 0) {
+            const playerTotal = handTotal(finalCards.player);
+            const dealerTotal = handTotal(finalCards.dealer);
+            
+            let playerWon = false;
+            if (playerTotal > 21) {
+              playerWon = false;
+            } else if (dealerTotal > 21) {
+              playerWon = true;
+            } else if (playerTotal > dealerTotal) {
+              playerWon = true;
+            } else if (playerTotal < dealerTotal) {
+              playerWon = false;
+            }
+            
+            stats.games++;
+            if (playerWon) {
+              stats.wins++;
+            } else {
+              stats.losses++;
+            }
+            updateStats();
+          }
+          gameInProgress = false;
+          lastGameState = null;
+        }
+        
+        if (hasCards) {
+          updateOverlay("Reading cards...", null, null, null);
+        } else {
+          updateOverlay("Waiting...", null, null, null);
+        }
         return;
       }
       
-      // Cards haven't changed - increment stability counter
+      if (!hasCards) {
+        gameInProgress = false;
+        updateOverlay("Waiting...", null, null, null);
+        return;
+      }
+      
       stableCount++;
       
-      // Wait for cards to be stable before making recommendation
       if (stableCount < STABLE_THRESHOLD) {
         updateOverlay(`Reading... (${stableCount}/${STABLE_THRESHOLD})`, null, null, null);
         return;
       }
       
-      // Cards are stable - make recommendation (but keep checking for changes)
       if (!player.length || !dealer) {
         updateOverlay("Waiting...", null, null, null);
         return;
       }
       
-      const total = handTotal(player);
-      const soft = isSoft(player);
       const move = getMove(player, dealer);
-      const stats = calculateProbabilities(player, dealer);
+      const probStats = calculateProbabilities(player, dealer);
       
-      updateOverlay(move, player, dealer, stats);
-      
-      // Log every check with details
-      console.log("[BJ Helper] Player:", player.join(", "), `(Total: ${total}${soft ? ' soft' : ''})`, "| Dealer:", dealer, "| Move:", move);
-      console.log("[BJ Helper] Probabilities - Stand:", (stats.winProbStand * 100).toFixed(1) + "%", "Hit:", (stats.winProbHit * 100).toFixed(1) + "%", "Double:", (stats.winProbDouble * 100).toFixed(1) + "%");
+      updateOverlay(move, player, dealer, probStats);
     } catch (e) {
-      console.error("[BJ Helper] Error:", e);
     }
   }
   
-  // Run immediately and then continuously every 500ms
   loop();
   setInterval(loop, CHECK_INTERVAL);
-  
-  console.log("[BJ Helper] Script running! Continuously checking cards every", CHECK_INTERVAL, "ms");
-  console.log("[BJ Helper] Waiting for cards to be stable before showing recommendations...");
 })();
-
